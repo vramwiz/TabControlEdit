@@ -1,90 +1,75 @@
-# TabControlEdit Sample
+# TabControlEdit.pas - タブキャプション編集対応 TTabControl 拡張ユニット
 
-Delphi 向け拡張コンポーネント `TTabControlEdit` のサンプルアプリケーションです。
-
-このサンプルでは、タブのキャプションをユーザーが直接編集できるようにするコンポーネント `TTabControlEdit` を動的に生成し、ポップアップメニューや編集イベントの利用方法を示します。
+`TabControlEdit.pas` は、Delphi 標準の `TTabControl` を拡張し、**タブのキャプションをインプレースで編集可能**にするコンポーネント `TTabControlEdit` を提供するユニットです。
 
 ---
 
-## 📦 使用コンポーネント
+## 📌 主な特徴
 
-- `TTabControlEdit`（カスタム）  
-  - タブの編集が可能な `TTabControl` の拡張版  
-- `TPopupMenu` / `TMenuItem`  
-  - 編集用の右クリックメニュー  
-- `TMemo`  
-  - 編集イベントのログ出力用  
+- ダブルクリックやメニュー操作によるタブキャプションの直接編集
+- 編集開始・終了・キャンセル時にイベントを発生
+- 外部から任意のタブの編集を開始可能
+- 編集中の状態を自動的に管理し、フォーカス移動やキー操作にも対応
 
 ---
 
-## 🔧 実装ポイント
+## 🔧 提供されるイベント
 
-### TabControl の生成と設定
+| イベント名        | タイミング              | 引数の説明                       |
+|-------------------|--------------------------|----------------------------------|
+| `OnEditBegin`     | 編集を開始するとき       | 編集対象文字列を `var` で渡す   |
+| `OnEditEnd`       | 編集を確定して終了したとき| 編集後の文字列を受け取る        |
+| `OnEditCancel`    | 編集がキャンセルされたとき| 引数なし                         |
 
 ```pascal
-FTabControl := TTabControlEdit.Create(Self);
-FTabControl.Parent := Self;
-FTabControl.Align := alClient;
-FTabControl.PopupMenu := PopupMenu1;
+type
+  TEditTabControlBegin = procedure(Sender: TObject; var EditStr: string) of object;
+  TEditTabControlEnd   = procedure(Sender: TObject; const EditStr: string) of object;
 ```
 
-### Memo の配置（注意: 行儀は良くない）
+---
+
+## 🚀 使い方の例（動的生成）
 
 ```pascal
-Memo1.Parent := FTabControl;
-Memo1.Align := alBottom;
-```
-
-### 編集メニューからタブ編集を開始
-
-```pascal
-procedure TFormMain.N1Click(Sender: TObject);
+procedure TForm1.FormCreate(Sender: TObject);
 begin
-  if FTabControl.TabIndex >= 0 then
-    FTabControl.BeginEdit(FTabControl.TabIndex);
+  Tab := TTabControlEdit.Create(Self);
+  Tab.Parent := Self;
+  Tab.Align := alTop;
+  Tab.Tabs.Add('タブ1');
+  Tab.Tabs.Add('タブ2');
+  Tab.OnEditEnd := TabEditEnd;
+end;
+
+procedure TForm1.TabEditEnd(Sender: TObject; const EditStr: string);
+begin
+  ShowMessage('変更後: ' + EditStr);
 end;
 ```
 
-### タブ編集イベントのログ出力
+外部から編集を開始したい場合：
 
 ```pascal
-procedure TFormMain.TabEditBegin(Sender: TObject; var EditStr: string);
-begin
-  Memo1.Lines.Add('EditBegin: ' + EditStr);
-end;
-
-procedure TFormMain.TabEditEnd(Sender: TObject; const EditStr: string);
-begin
-  Memo1.Lines.Add('EditEnd: ' + EditStr);
-end;
-
-procedure TFormMain.TabEditCancel(Sender: TObject);
-begin
-  Memo1.Lines.Add('EditCancel');
-end;
+Tab.BeginEdit(Tab.TabIndex);  // 選択中タブの編集を開始
 ```
 
 ---
 
-## ▶️ 起動時の初期化処理
+## ⚠ 注意事項
 
-- `FormCreate`: コンポーネント生成・イベント登録
-- `FormShow`: タブを3つ追加（「タブ1」「タブ2」「タブ3」）
-
----
-
-## 📁 ファイル構成例
-
-```
-TabControlEditSample/
-├── TabControlEdit.pas         ← 拡張コンポーネント本体
-├── MainForm.pas / .dfm        ← このサンプルのフォーム
-└── README.md                  ← この説明書
-```
+- `TTabControl` を継承しているため、`TPageControl` とは互換性がありません。
+- 編集を開始するタイミングはマウス操作だけでなく、メニューやショートカットからも可能です。
+- 編集フィールド (`TEdit`) は必要に応じて動的に表示／非表示されます。
 
 ---
 
-## 📘 備考
+## 📝 ライセンス
 
-- Delphi 10.x 以降で動作確認
-- `TabControlEdit` ユニットは自由に再利用・改造可能です
+このユニットは MIT ライセンス等、任意の自由なライセンス形態で利用できます。商用・非商用問わずご自由にお使いください。
+
+---
+
+## 📁 含まれるファイル
+
+- `TabControlEdit.pas` : 本体ユニット
